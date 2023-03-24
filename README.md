@@ -1,3 +1,57 @@
+自己构建docker的方式。给大家参考
+---------------------------------
+
+Dockerfile内容：
+```
+FROM node:slim
+LABEL maintainer="[imgyh](https://github.com/imgyh)"
+WORKDIR /usr/bin/tiktok
+COPY ./tiktok1.5.5 /usr/bin/tiktok
+#####  把源文件放到/tiktok1.5.5这个目录
+RUN set -ex \
+	&& ln -s /usr/bin/tiktok/TikTokWeb.py /usr/bin/TikTokWeb.py \
+	&& ln -s /usr/bin/tiktok/TikTokCommand.py   /usr/bin/TikTokCommand.py \
+	&& apt update
+RUN apt install -y python3.9  python3-pip
+RUN pip3 install -r /usr/bin/tiktok/requirements.txt
+ENV TZ=Asia/Shanghai
+CMD ["python3", "TikTokWeb.py"]
+```
+
+构建命令：docker build -t tiktok:v1 . 
+------------------------------------------
+docker-compose.yml内容
+
+```
+version: '3'
+services:
+  tiktok:
+    image: tiktok:v1
+    restart: always
+    container_name: douyin
+    ports:
+      - 5000:5000
+    volumes:
+      - ./down/:/usr/bin/tiktok/down/
+```
+
+运行 docker-compose up -d
+--------------------------------
+说明：
+1、可以访问localhost:5000进行网页解析
+
+2、可以运行/usr/bin/docker exec -i douyin python3 TikTokCommand.py -l https://v.douyin.com/***/ -p /usr/bin/tiktok/down/ -M like -n 10 
+
+进行批量解析下载。支持官方参数。放到linux的con中可以定时下载自己点赞的视频。
+
+3、因为搭建了nodejs环境。使用了本地解析X-Bogus。所以镜像比较大。大概600-700M解压后
+
+4、国内机子因为网络问题。构建的话会比较慢
+
+
+
+
+
 # 前言
 
 本文主要是关于我写的抖音批量下载与去水印工具的介绍。
